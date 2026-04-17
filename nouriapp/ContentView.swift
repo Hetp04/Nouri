@@ -38,9 +38,14 @@ enum OnboardingScreen: Int {
 }
 
 struct ContentView: View {
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
+    @StateObject private var socialAuth = SocialAuthManager.shared
+    @StateObject private var onboardingData = OnboardingData.shared
     @State private var currentScreen: OnboardingScreen = .welcome
     @State private var previousScreen: OnboardingScreen = .welcome
     @State private var goingForward: Bool = true
+    @State private var isValidatingSession: Bool = true
+    @State private var hasValidatedSession: Bool = false
 
     // Transition direction is driven by goingForward
     private var transition: AnyTransition {
@@ -50,6 +55,50 @@ struct ContentView: View {
     }
 
     var body: some View {
+        Group {
+            if isValidatingSession {
+                // Brief loading state while we check the token
+                ZStack {
+                    NouriColors.canvas.ignoresSafeArea()
+                    ProgressView()
+                        .tint(NouriColors.brandGreen)
+                }
+            } else if isLoggedIn {
+                HomeView()
+            } else {
+                onboardingFlow
+            }
+        }
+        .environmentObject(onboardingData)
+        .animation(.easeInOut(duration: 0.3), value: isLoggedIn)
+        .onOpenURL { url in
+            Task { await socialAuth.handleGoogleCallback(url: url) }
+        }
+        .fullScreenCover(isPresented: $socialAuth.showSocialOTP) {
+            SocialOTPView()
+        }
+        .task {
+            // THE FIX: Bypass if we are in an Xcode Preview, or if we already checked the token!
+            // Hot reloads will no longer cause you to get randomly logged out.
+            if hasValidatedSession || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
+                isValidatingSession = false
+                return
+            }
+            
+            hasValidatedSession = true
+            
+            // Validate session on app launch
+            if isLoggedIn {
+                let isValid = await socialAuth.validateSession()
+                if !isValid {
+                    isLoggedIn = false
+                }
+            }
+            isValidatingSession = false
+        }
+    }
+
+    private var onboardingFlow: some View {
         VStack(spacing: 0) {
             // Global progress bar
             if let progress = currentScreen.progress {
@@ -66,6 +115,7 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(NouriColors.canvas.ignoresSafeArea())
         }
+        .environmentObject(onboardingData)
         .task {
             // Preload FactsView GIFs immediately at app launch on a low-priority
             // background thread — they'll be cached long before the user gets there
@@ -129,20 +179,23 @@ struct ContentView: View {
         case .valueProp:
             ValuePropView(
                 onBack: { navigate(to: .compare) },
-                onNext: { navigate(to: .signUp) }
+                onNext: {
+                    onboardingData.wasOnboarded = true
+                    navigate(to: .signUp)
+                }
             )
         case .signUp:
             SignUpView(
                 onBack: { navigate(to: .valueProp) },
-                onAppleAuth: { print("Apple Auth") },
-                onGoogleAuth: { print("Google Auth") },
+                onAppleAuth: { socialAuth.signInWithApple() },
+                onGoogleAuth: { socialAuth.signInWithGoogle() },
                 onSignIn: { navigate(to: .signIn) }
             )
         case .signIn:
             SignInView(
                 onBack: { navigate(to: previousScreen) },
-                onAppleAuth: { print("Apple Auth") },
-                onGoogleAuth: { print("Google Auth") },
+                onAppleAuth: { socialAuth.signInWithApple() },
+                onGoogleAuth: { socialAuth.signInWithGoogle() },
                 onSignUp: { navigate(to: .signUp) }
             )
         }
@@ -169,4 +222,73 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
+
+struct SocialOTPView: View {
+    @StateObject private var socialAuth = SocialAuthManager.shared
+    @State private var code = ""
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        ZStack {
+            NouriColors.canvas.ignoresSafeArea()
+            
+            VStack(spacing: 24) {
+                HStack {
+                    Button("Cancel") {
+                        socialAuth.showSocialOTP = false
+                        socialAuth.pendingSocialUser = nil
+                        socialAuth.errorMessage = ""
+                    }
+                    .foregroundStyle(NouriColors.brandGreen)
+                    Spacer()
+                }
+                .padding(.horizontal, 24)
+                
+                VStack(spacing: 6) {
+                    Text("Verify Email")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(NouriColors.title)
+                    Text("We sent a code to\n\(socialAuth.pendingSocialUser?.email ?? "your email")")
+                        .font(.system(size: 14))
+                        .foregroundStyle(NouriColors.subtitle)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.top, 40)
+
+                OTPInputView(code: $code)
+                
+                if !socialAuth.errorMessage.isEmpty {
+                    Text(socialAuth.errorMessage)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.red)
+                }
+                
+                // Resend button with cooldown
+                Button(action: {
+                    Task { await socialAuth.resendSocialOTP() }
+                }) {
+                    if socialAuth.canResendSocialOTP {
+                        Text("Resend Code")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(NouriColors.brandGreen)
+                    } else {
+                        Text("Resend in \(socialAuth.socialOTPResendSecs)s")
+                            .font(.system(size: 14))
+                            .foregroundStyle(NouriColors.subtitle)
+                    }
+                }
+                .disabled(!socialAuth.canResendSocialOTP)
+
+                Spacer()
+                
+                ActionButton(title: "Verify & Continue", isLoading: socialAuth.isLoading) {
+                    await socialAuth.verifySocialOTP(code: code)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20)
+            }
+        }
+    }
+}
+
 

@@ -31,8 +31,26 @@ class EmailSignInViewModel: ObservableObject {
         isLoading = true
         errorMessage = ""
         
+        let normalizedEmail = email.lowercased().trimmingCharacters(in: .whitespaces)
+        
         do {
-            try await auth.signIn(email: email, password: password)
+            let data = try await auth.signIn(email: normalizedEmail, password: password)
+            
+            // Extract access token from response for secure storage
+            let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
+            let accessToken = json["access_token"] as? String ?? ""
+            let refreshToken = json["refresh_token"] as? String ?? ""
+            let userMeta = (json["user"] as? [String: Any])?["user_metadata"] as? [String: Any] ?? [:]
+            let name = userMeta["full_name"] as? String ?? ""
+            
+            SocialAuthManager.shared.persistSession(
+                email: normalizedEmail,
+                name: name,
+                accessToken: accessToken,
+                refreshToken: refreshToken
+            )
+            // Tie onboarding data to account securely avoiding redundant calls
+            await auth.syncProfile(email: normalizedEmail)
             phase = .success
             onPhaseChange()
         } catch {

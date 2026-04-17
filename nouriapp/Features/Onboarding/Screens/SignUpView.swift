@@ -13,6 +13,7 @@ struct SignUpView: View {
 
     @State private var showEmailSheet = false
     @State private var sheetDetent: PresentationDetent = .height(475)
+    @EnvironmentObject var onboardingData: OnboardingData
 
     var body: some View {
         VStack(spacing: 0) {
@@ -124,6 +125,9 @@ struct SignUpView: View {
             })
             .presentationDetents([sheetDetent])
             .presentationDragIndicator(.hidden)
+        }
+        .onAppear {
+            print("🚀 [SignUpView] appeared. wasOnboarded: \(onboardingData.wasOnboarded)")
         }
     }
     

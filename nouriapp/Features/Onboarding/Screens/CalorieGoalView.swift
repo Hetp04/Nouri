@@ -22,6 +22,8 @@ struct CalorieGoalView: View {
     @State private var rulerOffset: CGFloat
     @State private var committedOffset: CGFloat
 
+    @EnvironmentObject var onboardingData: OnboardingData
+
     // Snap & physics animation
     @State private var ticker: Timer?
     @FocusState private var isInputFocused: Bool
@@ -54,12 +56,12 @@ struct CalorieGoalView: View {
                         .frame(width: 180, height: 180)
                         .padding(.bottom, 8)
 
-                    Text("Daily calorie goal")
+                    Text(OnboardingCopy.CalorieGoal.title)
                         .font(.system(size: 28, weight: .semibold))
                         .tracking(-0.3)
                         .foregroundStyle(NouriColors.title)
                     
-                    Text("Set your daily calorie target based on\nyour personal health and fitness goals.")
+                    Text(OnboardingCopy.CalorieGoal.subtitle)
                         .font(.system(size: 15, weight: .regular))
                         .lineSpacing(4)
                         .multilineTextAlignment(.center)
@@ -161,7 +163,7 @@ struct CalorieGoalView: View {
                 Button {
                     showCalculatorSheet = true
                 } label: {
-                    Text("I don't know my calories")
+                    Text(OnboardingCopy.CalorieGoal.noIdeaButton)
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(NouriColors.subtitle)
                         .padding(.vertical, 8)
@@ -178,7 +180,8 @@ struct CalorieGoalView: View {
             NouriOnboardingFooter(
                 onBack: onBack,
                 onNext: {
-                    isInputFocused = false 
+                    isInputFocused = false
+                    onboardingData.calorieGoal = calories
                     onNext()
                 },
                 nextButtonLabel: "Continue"
@@ -333,4 +336,5 @@ struct CalorieGoalView: View {
 #Preview("Calorie Goal") {
     CalorieGoalView()
         .background(NouriColors.canvas.ignoresSafeArea())
+        .environmentObject(OnboardingData.shared)
 }

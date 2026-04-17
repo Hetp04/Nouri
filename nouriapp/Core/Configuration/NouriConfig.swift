@@ -16,9 +16,20 @@ struct NouriConfig {
     
     // API Paths
     enum Path {
-        static let authSignUp = "/auth/v1/signup"
-        static let authSignIn = "/auth/v1/token?grant_type=password"
-        static let restOTP    = "/rest/v1/otp_codes"
-        static let restVerify = "/rest/v1/email_verifications"
+        static let authSignUp  = "/auth/v1/signup"
+        static let authSignIn  = "/auth/v1/token?grant_type=password"
+        static let authIdToken = "/auth/v1/token?grant_type=id_token" // Apple / Google id_token exchange
+        static let authUser    = "/auth/v1/user"                      // Get authenticated user profile
+        static let authLogout  = "/auth/v1/logout"
+        static let restOTP     = "/rest/v1/otp_codes"
+        static let restVerify  = "/rest/v1/email_verifications"
+        static let restProfiles = "/rest/v1/user_profiles"
+    }
+    
+    // Global App Constants
+    enum Constants {
+        static let isLoggedInKey = "isLoggedIn"
+        static let googleRedirectURI = "nouri-app://auth/callback"
+        static let resendApiURL = "https://api.resend.com/emails"
     }
 }

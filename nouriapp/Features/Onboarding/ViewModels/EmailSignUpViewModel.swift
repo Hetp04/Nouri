@@ -53,6 +53,7 @@ class EmailSignUpViewModel: ObservableObject {
         
         isLoading = true
         errorMessage = ""
+        email = email.lowercased().trimmingCharacters(in: .whitespaces)
         
         do {
             try await auth.signUp(email: email, password: password, name: fullName)
@@ -75,6 +76,9 @@ class EmailSignUpViewModel: ObservableObject {
         do {
             try await auth.verifyOTP(email: email, code: otpCode)
             timerTask?.cancel()
+            // Tie onboarding data to account securely
+            SocialAuthManager.shared.persistSession(email: email, name: fullName)
+            await auth.syncProfile(email: email)
             phase = .success
         } catch {
             errorMessage = error.localizedDescription
@@ -106,12 +110,14 @@ class EmailSignUpViewModel: ObservableObject {
             errorMessage = "Password must be at least 6 characters."; return false
         }
         return true
+        
     }
     
     private func startTimer() {
         timerTask?.cancel()
         resendSecs = 30
         canResend = false
+
         
         timerTask = Task {
             for i in stride(from: 30, through: 1, by: -1) {

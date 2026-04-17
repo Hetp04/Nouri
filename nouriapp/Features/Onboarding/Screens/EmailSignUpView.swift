@@ -191,7 +191,7 @@ struct FormField: View {
 
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .foregroundStyle(isFocused || (strengthWidth ?? 0 > 0) ? (strengthColor ?? NouriColors.brandGreen) : .black.opacity(0.3))
+                    .foregroundStyle(isFocused ? (strengthColor ?? NouriColors.brandGreen) : .black.opacity(0.3))
                     .font(.system(size: 18))
                     .frame(width: 24)
 
@@ -215,7 +215,7 @@ struct FormField: View {
             .overlay(
                 Capsule()
                     .stroke(
-                        isFocused || (strengthWidth ?? 0 > 0) ? (strengthColor ?? NouriColors.brandGreen) : Color.clear,
+                        isFocused ? (strengthColor ?? NouriColors.brandGreen) : Color.clear,
                         lineWidth: 1.5
                     )
             )

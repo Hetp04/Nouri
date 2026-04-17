@@ -18,10 +18,10 @@ struct FactsView: View {
 
     // GIF names match RN source exactly: diabetes, flask, bpa-free, dropper
     private let facts = [
-        FoodFact(id: "sugar",   title: "Sugar has 60+ names",    content: "Ingredients like dextrose and maltose are hidden sugars causing glucose spikes.", gifName: "diabetes"),
-        FoodFact(id: "natural", title: "\"Natural\" is vague",   content: "\"Natural flavors\" can contain 100+ synthetic chemicals and compounds.",        gifName: "flask"),
-        FoodFact(id: "labels",  title: "Labels can mislead",     content: "\"Low fat\" often means added sugar to replace the lost flavor.",                 gifName: "bpa-free"),
-        FoodFact(id: "dye",     title: "Red Dye #40",            content: "Made from petroleum and banned in parts of Europe with other colors.",            gifName: "dropper"),
+        FoodFact(id: "sugar",   title: OnboardingCopy.Facts.sugarTitle,    content: OnboardingCopy.Facts.sugarContent, gifName: "diabetes"),
+        FoodFact(id: "natural", title: OnboardingCopy.Facts.naturalTitle,   content: OnboardingCopy.Facts.naturalContent,        gifName: "flask"),
+        FoodFact(id: "labels",  title: OnboardingCopy.Facts.labelsTitle,     content: OnboardingCopy.Facts.labelsContent,                 gifName: "bpa-free"),
+        FoodFact(id: "dye",     title: OnboardingCopy.Facts.dyeTitle,            content: OnboardingCopy.Facts.dyeContent,            gifName: "dropper"),
     ]
 
     var body: some View {
@@ -29,9 +29,9 @@ struct FactsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 NouriOnboardingHeader(
                     imageName: "facts",
-                    title: "Interesting Facts",
-                    subtitle: "Insights based on your profile to help you navigate your journey.",
-                    accessibilityLabel: "Interesting facts avatar",
+                    title: OnboardingCopy.Facts.title,
+                    subtitle: OnboardingCopy.Facts.subtitle,
+                    accessibilityLabel: OnboardingCopy.Facts.accessibilityLabel,
                     imageScale: 1.1
                 )
 

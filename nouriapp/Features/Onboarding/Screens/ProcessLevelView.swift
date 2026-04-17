@@ -7,20 +7,7 @@ import SwiftUI
 
 // MARK: - Data
 
-private struct FrequencyLevel {
-    let label: String
-    let description: String
-    let accent: Color
-    let icon: String          // SF Symbol
-    let value: Int            // 0 = Never … 3 = Daily
-}
 
-private let levels: [FrequencyLevel] = [
-    FrequencyLevel(label: "Never",  description: "Avoid completely",        accent: Color(red: 76/255,  green: 175/255, blue: 80/255),  icon: "xmark.circle", value: 0),
-    FrequencyLevel(label: "Rarely", description: "Occasionally",            accent: Color(red: 255/255, green: 193/255, blue: 7/255),   icon: "hourglass",    value: 1),
-    FrequencyLevel(label: "Often",  description: "Several times a week",    accent: Color(red: 255/255, green: 152/255, blue: 0/255),   icon: "clock",        value: 2),
-    FrequencyLevel(label: "Daily",  description: "Every day",               accent: Color(red: 244/255, green: 67/255,  blue: 54/255),  icon: "calendar",     value: 3),
-]
 
 // MARK: - Vertical Slider Component
 
@@ -35,10 +22,10 @@ private struct FrequencySlider: View {
     private var step: CGFloat { handleSize + spacing }
 
     private func yForValue(_ v: Int) -> CGFloat {
-        CGFloat(levels.count - 1 - v) * step
+        CGFloat(TopicRegistry.frequencyLevels.count - 1 - v) * step
     }
 
-    var currentLevel: FrequencyLevel { levels[selectedValue] }
+    var currentLevel: FrequencyLevel { TopicRegistry.frequencyLevels[selectedValue] }
 
     @State private var baseY: CGFloat = 0
     @State private var handleY: CGFloat = 0
@@ -94,8 +81,8 @@ private struct FrequencySlider: View {
                             guard !isHinting else { return }
                             let rawY = baseY + gesture.translation.height
                             let rawIndex = rawY / step
-                            let v = levels.count - 1 - Int(round(rawIndex))
-                            let clamped = min(max(v, 0), levels.count - 1)
+                            let v = TopicRegistry.frequencyLevels.count - 1 - Int(round(rawIndex))
+                            let clamped = min(max(v, 0), TopicRegistry.frequencyLevels.count - 1)
                             if clamped != selectedValue {
                                 selectedValue = clamped
                             }
@@ -118,8 +105,8 @@ private struct FrequencySlider: View {
 
             // Labels Column
             VStack(alignment: .leading, spacing: spacing) {
-                ForEach(levels.indices.reversed(), id: \.self) { i in
-                    let level = levels[i]
+                ForEach(TopicRegistry.frequencyLevels.indices.reversed(), id: \.self) { i in
+                    let level = TopicRegistry.frequencyLevels[i]
                     let isActive = level.value == selectedValue
                     VStack(alignment: .leading, spacing: 3) {
                         Text(level.label)
@@ -182,21 +169,21 @@ struct ProcessLevelView: View {
     var onBack: () -> Void = {}
     var onNext: () -> Void = {}
 
-    @State private var selectedValue: Int = 0
+    @EnvironmentObject var onboardingData: OnboardingData
 
     var body: some View {
         NouriOnboardingWrapper(onBack: onBack, onNext: onNext) {
             VStack(alignment: .leading, spacing: 0) {
                 NouriOnboardingHeader(
                     imageName: "ultra",
-                    title: "Ultra-processed food intake",
-                    subtitle: "Select the frequency that matches your lifestyle",
-                    accessibilityLabel: "Ultra-processed food illustration",
+                    title: OnboardingCopy.ProcessLevel.title,
+                    subtitle: OnboardingCopy.ProcessLevel.subtitle,
+                    accessibilityLabel: OnboardingCopy.ProcessLevel.accessibilityLabel,
                     imageScale: 1.2
                 )
 
-                FrequencySlider(selectedValue: $selectedValue, animateHint: animateHint)
-                    .sensoryFeedback(.impact(weight: .light), trigger: selectedValue)
+                FrequencySlider(selectedValue: $onboardingData.processLevel, animateHint: animateHint)
+                    .sensoryFeedback(.impact(weight: .light), trigger: onboardingData.processLevel)
                     .padding(.horizontal, 8)
             }
         }
@@ -205,4 +192,5 @@ struct ProcessLevelView: View {
 
 #Preview("Process Level") {
     ProcessLevelView()
+        .environmentObject(OnboardingData.shared)
 }

@@ -9,20 +9,20 @@ struct ValuePropView: View {
             // TOP-ALIGNED MINIMAL CONTENT
             VStack(alignment: .center, spacing: 14) {
                 // NEUTRAL BREADCRUMB TAG
-                Text("Product Comparison")
+                Text(OnboardingCopy.ValueProp.tag)
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(Color.black.opacity(0.4))
                     .padding(.horizontal, 10).padding(.vertical, 4)
                     .background(Color.black.opacity(0.04), in: Capsule())
                 
                 VStack(alignment: .center, spacing: 6) {
-                    Text("So stop guessing,\nstart knowing")
+                    Text(OnboardingCopy.ValueProp.title)
                         .font(.system(size: 24, weight: .semibold))
                         .tracking(-0.3)
                         .foregroundStyle(NouriColors.title)
                         .multilineTextAlignment(.center)
                     
-                    Text("Nouri decodes every label in seconds.")
+                    Text(OnboardingCopy.ValueProp.subtitle)
                         .font(.system(size: 15, weight: .regular))
                         .lineSpacing(4)
                         .foregroundStyle(Color.black.opacity(0.4))

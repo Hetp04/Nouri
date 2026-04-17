@@ -45,4 +45,9 @@ enum NouriColors {
     
     // MARK: - Product Feedback
     static let badProductRed = Color(red: 192/255, green: 57/255, blue: 43/255) // #C0392B
+    
+    // MARK: - Home / Dashboard
+    static let iconBgColor = Color(red: 245/255, green: 245/255, blue: 245/255)
+    static let sparkleBgColor = Color(red: 255/255, green: 240/255, blue: 230/255)
+    static let sparkleColor = Color(red: 160/255, green: 110/255, blue: 90/255)
 }

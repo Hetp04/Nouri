@@ -1,7 +1,9 @@
 import SwiftUI
 
+
 struct HomeView: View {
     @EnvironmentObject var onboardingData: OnboardingData
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showSettings = false
     @State private var showCalendar = false
     @State private var showForbiddenList = false
@@ -19,7 +21,12 @@ struct HomeView: View {
                 
                 TabView(selection: $dayOffset) {
                     ForEach(-365...365, id: \.self) { offset in
-                        MainInputArea().id(offset).tag(offset)
+                        let date = Calendar.current.startOfDay(
+                            for: Calendar.current.date(byAdding: .day, value: offset, to: Date()) ?? Date()
+                        )
+                        MainInputArea(date: date)
+                            .id(offset)
+                            .tag(offset)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
@@ -27,6 +34,14 @@ struct HomeView: View {
                 
                 HomeBottomBar(onForbidden: { showForbiddenList = true })
                     .padding(.horizontal, 20).padding(.bottom, 16).padding(.top, 8)
+            }
+        }
+        // Flush notes when app moves to background
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .background {
+                let email = KeychainManager.read(key: KeychainManager.userEmailKey) ?? ""
+                let date = selectedDate
+                Task { await NouriDailyNotes.shared.flushAll(email: email) }
             }
         }
         .fullScreenCover(isPresented: $showSettings) { SettingsView() }
@@ -63,7 +78,7 @@ struct HomeView: View {
                 Image.bundled("nouri").resizable().scaledToFit().frame(width: 70, height: 26).offset(y: -2)
                 Spacer()
                 HStack(spacing: 16) {
-                    Button(action: {}) { Image(systemName: "shield") }.buttonStyle(.plain)
+                    Button(action: { haptic(.light); showForbiddenList = true }) { Image(systemName: "nosign") }.buttonStyle(.plain)
                     Button(action: { haptic(.light); showSettings = true }) { Image(systemName: "gearshape") }.buttonStyle(.plain)
                 }.font(.system(size: 15, weight: .semibold)).foregroundStyle(NouriColors.title).nouriPill()
             }
@@ -97,18 +112,63 @@ struct HomeView: View {
 
 // MARK: - Components
 private struct MainInputArea: View {
-    @State private var textInput: String = ""
+    let date: Date
+
+    private var email: String { KeychainManager.read(key: KeychainManager.userEmailKey) ?? "" }
+
+    @StateObject private var vm: DailyNoteViewModel
+
+    init(date: Date) {
+        self.date = date
+        // StateObject must be initialised with a wrappedValue here so SwiftUI
+        // can identity-track it per date tab.
+        _vm = StateObject(wrappedValue: DailyNoteViewModel(
+            email: KeychainManager.read(key: KeychainManager.userEmailKey) ?? "",
+            date: date
+        ))
+    }
+
     var body: some View {
-        TextEditor(text: $textInput)
-            .font(.system(size: 18)).foregroundStyle(NouriColors.title).scrollContentBackground(.hidden)
-            .overlay(alignment: .topLeading) {
-                if textInput.isEmpty {
-                    Text("What did you eat today?").font(.system(size: 18)).foregroundStyle(.gray.opacity(0.6)).padding(.top, 8).allowsHitTesting(false)
+        ZStack(alignment: .topLeading) {
+            // Custom Binding — only triggers onTextChanged on USER edits, not during load().
+            // Using onChange is dangerous because vm.load() also sets vm.text, which would
+            // start the debounce timer unnecessarily.
+            let editBinding = Binding<String>(
+                get: { vm.text },
+                set: { newValue in
+                    vm.text = newValue
+                    vm.onTextChanged()
                 }
-            }.padding(.horizontal, 16)
+            )
+
+            NouriTextEditor(
+                text: editBinding,
+                font: .systemFont(ofSize: 18),
+                lineSpacing: 2,
+                paragraphSpacing: 10,
+                foregroundColor: UIColor(NouriColors.title)
+            )
+            .padding(.horizontal, 16)
+
+            if vm.text.isEmpty {
+                Text("What did you eat today?")
+                    .font(.system(size: 18))
+                    .foregroundStyle(.gray.opacity(0.6))
+                    .padding(.top, 8)
+                    .padding(.horizontal, 16)
+                    .allowsHitTesting(false)
+            }
+        }
+        // 300 ms delay before loading — prevents TabView's pre-rendered adjacent pages
+        // from firing unnecessary network calls when the user is just swiping past a day.
+        .task {
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            guard !Task.isCancelled else { return }
+            await vm.load()
+        }
+        .onDisappear { Task { await vm.flush() } }
     }
 }
-
 
 
 private struct HomeBottomBar: View {
@@ -129,7 +189,7 @@ private struct HomeBottomBar: View {
             HStack(spacing: 10) {
                 IconHelper(icon: "mic")
                 IconHelper(icon: "camera")
-                IconHelper(icon: "nosign", action: onForbidden)
+                IconHelper(icon: "shield")
             }
         }.padding(14).background(RoundedRectangle(cornerRadius: 32).fill(.white).shadow(color: .black.opacity(0.06), radius: 15, y: 10))
     }

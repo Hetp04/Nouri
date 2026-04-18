@@ -33,6 +33,12 @@ struct SettingsView: View {
                         NavigationRow(icon: "list.bullet.rectangle", title: "Ingredient Watchlist", subtitle: "Manage your red flags") {
                             // TODO: Add Watchlist Subview
                         }
+                        
+                        Divider().padding(.leading, 52)
+                        
+                        NavigationRow(icon: "bookmark", title: "Manage Saved Products", subtitle: "0 saved meals for now") {
+                            // TODO: Add Saved Products Subview
+                        }
                     }
                     
                     settingsGroup(title: "Support") {

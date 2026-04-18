@@ -25,7 +25,7 @@ struct FactsView: View {
     ]
 
     var body: some View {
-        NouriOnboardingWrapper(onBack: onBack, onNext: onNext, nextButtonLabel: "Get Started") {
+        NouriOnboardingWrapper(onBack: onBack, onNext: onNext, nextButtonLabel: "Next") {
             VStack(alignment: .leading, spacing: 0) {
                 NouriOnboardingHeader(
                     imageName: "facts",

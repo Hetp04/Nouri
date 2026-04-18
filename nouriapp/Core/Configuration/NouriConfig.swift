@@ -24,6 +24,8 @@ struct NouriConfig {
         static let restOTP     = "/rest/v1/otp_codes"
         static let restVerify  = "/rest/v1/email_verifications"
         static let restProfiles = "/rest/v1/user_profiles"
+        static let restDailyNotes = "/rest/v1/daily_notes"
+
     }
     
     // Global App Constants

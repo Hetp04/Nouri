@@ -189,7 +189,7 @@ private struct HomeBottomBar: View {
             HStack(spacing: 10) {
                 IconHelper(icon: "mic")
                 IconHelper(icon: "camera")
-                IconHelper(icon: "shield")
+                IconHelper(icon: "barcode.viewfinder")
             }
         }.padding(14).background(RoundedRectangle(cornerRadius: 32).fill(.white).shadow(color: .black.opacity(0.06), radius: 15, y: 10))
     }

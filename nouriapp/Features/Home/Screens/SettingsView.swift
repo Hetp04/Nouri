@@ -36,8 +36,8 @@ struct SettingsView: View {
                         
                         Divider().padding(.leading, 52)
                         
-                        NavigationRow(icon: "bookmark", title: "Manage Saved Products", subtitle: "0 saved meals for now") {
-                            // TODO: Add Saved Products Subview
+                        NavigationRow(icon: "bookmark", title: "Saved Meals", subtitle: "0 saved meals") {
+                            // TODO: Add Saved Meals Subview
                         }
                     }
                     

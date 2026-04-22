@@ -43,12 +43,16 @@ actor NouriDailyNotes {
     /// Save only if content has changed from what's currently on the server.
     func saveIfDirty(email: String, date: Date, content: String) async {
         let key = Self.key(for: date)
-        // Track pending write so flushAll can find it on backgrounding
         pendingWrites[key] = (email: email, content: content)
-        guard cache[key] != content else {
+        
+        // If we've never fetched this date, assume the server is empty
+        let serverState = cache[key] ?? ""
+        
+        guard serverState != content else {
             print("✨ [DailyNotes] Skipping save — content unchanged for \(key)")
             return
         }
+        
         await persistToServer(email: email, key: key, content: content)
         pendingWrites.removeValue(forKey: key)
     }
